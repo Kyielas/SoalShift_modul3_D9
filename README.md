@@ -11,6 +11,48 @@ Contoh:
 
 
 ### Jawab
+Pertama saya membuat fungsi untuk factorial itu sendiri yaitu
+```c
+void *factorial(void *x){
+        int hasil=1;
+        int z=*((int *)x);              // dibuat dua variabel dengan isi yang sama dikarenakan
+        int temp=*((int *)x);           // dipakai di dalam perulangan serta print
+        while(z>0){
+                hasil = hasil * z;
+                z--;
+        }
+        printf("%d! = %d\n",temp,hasil);
+}
+```
+lalu dari situ didalam main akan digunakan untuk melakukan **sorting** serta **pembuatan thread**
+akan tetapi sebelumnya untuk bisa melakukan input dari bash diperlukan penggunaan argument yaitu sbg berikut  
+```c
+int main(int argc, char** argv){
+        int n[100];         // array untuk menyimpan urutan input
+        pthread_t tid;
+        for(int i=1;i<argc;i++){
+                n[i-1]=atoi(argv[i]);   // untuk mengubah char menjadi int
+        }
+```
+setelah diubah menjadi integer (diubah karena char tidak bisa mencari faktorial)dilakukan sorting dengan bantuan command **qsort**
+```c
+int cmpfunc (const void * a, const void * b) {
+   return ( *(int*)a - *(int*)b );                  // fungsi untuk men-sort dari kecil ke besar
+}
+
+qsort(n,argc-1,sizeof(int),cmpfunc);               
+```
+terakhir baru dibuat looping untuk membuat thread sesuai jumlah array dan dibuat join agar hasilnya ditampilkan secara berurutan tanpa mendahului
+
+Command | Description 
+--- | -----
+atoi | digunakan untuk mengubah string menjadi integer
+qsort | fungsi yang disediakan library untuk men-sort array
+
+###### reference:
+* [Command Line Argument](https://www.geeksforgeeks.org/command-line-arguments-in-c-cpp/)
+* [Qsort](https://www.tutorialspoint.com/c_standard_library/c_function_qsort.htm)
+* [Atoi](http://www.cplusplus.com/reference/cstdlib/atoi/)
 
 ## Soal No. 2
 
@@ -31,10 +73,81 @@ Pada suatu hari ada orang yang ingin berjualan 1 jenis barang secara private, di
 ### Jawab
 
 
-## Soal No. 3
-
+## Soal 3
+Agmal dan Iraj merupakan 2 sahabat yang sedang kuliah dan hidup satu kostan, sayangnya mereka mempunyai gaya hidup yang berkebalikan, dimana Iraj merupakan laki-laki yang sangat sehat,rajin berolahraga dan bangun tidak pernah kesiangan sedangkan Agmal hampir menghabiskan setengah umur hidupnya hanya untuk tidur dan ‘ngoding’. Dikarenakan mereka sahabat yang baik, Agmal dan iraj sama-sama ingin membuat satu sama lain mengikuti gaya hidup mereka dengan cara membuat Iraj sering tidur seperti Agmal, atau membuat Agmal selalu bangun pagi seperti Iraj. Buatlah suatu program C untuk menggambarkan kehidupan mereka dengan spesifikasi sebagai berikut:
+a. Terdapat 2 karakter Agmal dan Iraj
+b. Kedua karakter memiliki status yang unik
+  * Agmal mempunyai WakeUp_Status, di awal program memiliki status 0
+  * Iraj memiliki Spirit_Status, di awal program memiliki status 100
+  * Terdapat 3 Fitur utama
+    - All Status, yaitu menampilkan status kedua sahabat
+      Ex: Agmal WakeUp_Status = 75 
+          Iraj Spirit_Status = 30
+    - “Agmal Ayo Bangun” menambah WakeUp_Status Agmal sebesar 15 point
+    - “Iraj Ayo Tidur” mengurangi Spirit_Status Iraj sebanyak 20 point
+  * Terdapat Kasus yang unik dimana:
+    - Jika Fitur “Agmal Ayo Bangun” dijalankan sebanyak 3 kali, maka Fitur “Iraj Ayo Tidur” Tidak bisa dijalankan selama 10                         detik (Dengan mengirim pesan ke sistem “Fitur Iraj Ayo Tidur disabled 10 s”)
+    - Jika Fitur  “Iraj Ayo Tidur” dijalankan sebanyak 3 kali, maka Fitur “Agmal Ayo Bangun” Tidak bisa dijalankan selama     10 detik (Dengan mengirim pesan ke sistem “Agmal Ayo Bangun disabled 10 s”)
+  * Program akan berhenti jika Salah Satu :  
+    - WakeUp_Status Agmal >= 100 (Tampilkan Pesan “Agmal Terbangun,mereka bangun pagi dan berolahraga”)
+    - Spirit_Status Iraj <= 0 (Tampilkan Pesan “Iraj ikut tidur, dan bangun kesiangan bersama Agmal”)
+  * Syarat Menggunakan Lebih dari 1 Thread
 
 ### Jawab
+Pertama-tama untuk memenuhi poin **a** yaitu 2 karakter Agmal dan Iraj maka saya buat dua fungsi yang berbeda
+dan untuk poin **b** saya buat dua variabel WakeUp_Status = 0 dan Spirit_Status = 100
+```c
+-- VARIABEL UTAMA --
+int WakeUp_Status = 0;
+int Spirit_Status = 100;
+int mark=3;               // mark digunakan untuk menandakan tiap thread ex : mark=3 yaitu menu utama
+int iterA, iterI;         // untuk mencounter jumlah banyaknya fitur dijalankan
+int slpA=1;               // untuk menandakan apakah fitur di disabled atau tidak
+int slpI=1;               
+```
+lalu untuk menjelaskan fiturnya saya akan memberi contoh **fungsi Agmal** :
+```c
+void *Agmal(void *a){
+        while(1){
+                while(mark!=0){}                  // jika bukan mark dia maka dia akan melakukan infinite loop         
+                if(iterI==3){                     // melanjutkan apabila counter Iraj melebihi 3
+                        printf("Agmal Ayo Bangun disabled 10s\n");
+                        iterI=0;                  // mereset counter
+                        mark=3;                   // mengembalikan ke mark menu
+                        slpA=0;                   // men-flag disable
+                        sleep(10);
+                        slpA=1;
+                        continue;
+                }
+                WakeUp_Status+=15;                // menambahkan 15 poin dalam fitur WakeUp_Status
+                printf("WakeUp_Status : %d\n",WakeUp_Status);
+                iterA++;                          // menghitung counter fitur Agmal
+                if(iterA==3){                     // jika counter mencapai 3 maka pindah ke mark Iraj(1)
+                        mark=1;
+                        continue;
+                }
+
+                mark=3;                           // mengembalikan ke mark menu
+        }
+}
+```
+untuk fitur Iraj hampir sama tapi kebalikannya dan ada juga fitur All Status untuk memprint nilai sekarang
+lalu untuk mainnya berisi pembuatan tiga thread yaitu Agmal, Iraj , dan All Status
+dan terakhir untuk bagian I/O nya yaitu :
+```c
+        while(WakeUp_Status<100 && Spirit_Status>0){
+                while(mark!=3){}                  // jika bukan mark dia maka dia akan melakukan infinite loop
+                scanf("%[^\n]%*c",i);
+                if(slpA==1 && strcmp(a,i)==0) mark=0;   // pindah ke thread Agmal
+                if(slpI==1 && strcmp(b,i)==0) mark=1;   // pindah ke thread Iraj
+                if(strcmp(c,i)==0) mark=2;              // pindah ke thread All Status
+                printf("%d\n",mark);
+        }
+        if(WakeUp_Status>=100) printf("Agmal Terbangun,mereka bangun pagi dan berolahraga");
+        if(Spirit_Status<=0) printf("Iraj ikut tidur, dan bangun kesiangan bersama Agmal");
+```
+###### reference:
+[Scanf](https://www.geeksforgeeks.org/taking-string-input-space-c-3-different-methods/)
 
 ## Soal No. 4
 
