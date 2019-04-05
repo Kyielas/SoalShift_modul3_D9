@@ -161,3 +161,82 @@ Dengan Syarat :
 * Boleh menggunakan system
 
 ### Jawab
+
+Untuk membuat program dengan ketentuan seperti di atas, maka digunakanlah beberapa command seperti dibawah ini
+
+Command | Description 
+--- | -----
+``` system() ``` | sebuah perintah yang digunakan untuk menjalankan perintah seperti pada command line
+``` head ``` | sebuah perintah pada command line yang berfungsi untuk melihat proses paling atas
+``` tail ``` | sebuah perintah pada command line yang berfungsi untuk melihat proses paling bawah
+
+
+Untuk dapat menjalankan program dengan memanfaatkan multithreading, maka dibuatlah fungsi-fungsi yang menjalankan perintah secara individu. Beberapa fungsi tersebut dapat dilihat seperti berikut
+```c
+void* tulis1(){				//Fungsi untuk mencatat 10 proses paling atas pada file
+	status1=0;
+	system("ps -aux | head >> /home/ivan/Documents/FolderProses1/SimpanProses1.txt");
+	status1=1;
+}
+void* tulis2(){				//Fungsi untuk mencatat 10 proses paling atas kedua pada file
+	status2=0;
+	system("ps -aux | head -20 | tail >> /home/ivan/Documents/FolderProses2/SimpanProses2.txt");
+	status2=1;
+}
+
+void* kompres1(){			//Fungsi untuk mengkompres file dan menghapus file aslinya
+	while(status1!=1 && status2!=1){}
+	status1=0;
+	system("zip -r -j -m KompresProses1.zip /home/ivan/Documents/FolderProses1/SimpanProses1.txt");
+	status1=1;
+}
+
+void* kompres2(){			//Fungsi untuk mengkompres file dan menghapus file aslinya
+	while(status1!=1 && status2!=1){}
+	status2=0;
+	system("zip -r -j -m KompresProses2.zip /home/ivan/Documents/FolderProses2/SimpanProses2.txt");
+	status2=1;
+}
+
+void* unzip1(){				//Fungsi untuk mengekstrak file zip
+	while(status1!=1 && status2!=1){}
+	status1=0;
+	system("unzip /home/ivan/Sisop/Praktikum3/Soal4/KompresProses1.zip");
+	status1=1;
+}
+
+void* unzip2(){				//Fungsi untuk mengekstrak file zip
+	while(status1!=1 && status2!=1){}
+	status2=0;
+	system("unzip /home/ivan/Sisop/Praktikum3/Soal4/KompresProses2.zip");
+	status2=1;
+}
+```
+
+Setelah itu dibuatlah main untuk menjalankan fungsi-fungsi di atas. Main program dari file tersebut dapat dilihat seperti berikut.
+
+```c
+
+int main(){
+
+    pthread_create(&(tid1), NULL, (void*)tulis1, NULL);		//Memanggil fungsi tulis1
+    pthread_create(&(tid1), NULL, (void*)tulis2, NULL);		//Memanggil fungsi tulis2
+    pthread_join(tid1, NULL);
+    pthread_join(tid2, NULL);
+
+    pthread_create(&(tid1), NULL, (void*)kompres1, NULL);	//Memanggil fungsi kompres1
+ 	pthread_create(&(tid2), NULL, (void*)kompres2, NULL);	//Memanggil fungsi kompres2
+ 	pthread_join(tid1, NULL);
+    pthread_join(tid2, NULL);
+
+    sleep(15);							//Untuk menunda pragram selama 15 detik
+
+    pthread_create(&(tid1), NULL, (void*)unzip1, NULL);		//Memanggil fungsi unzip1
+ 	pthread_create(&(tid2), NULL, (void*)unzip2, NULL);	//Memanggil fungsi unzip2
+ 	pthread_join(tid1, NULL);
+    pthread_join(tid2, NULL);
+    
+ 
+    return 0;
+}
+```
